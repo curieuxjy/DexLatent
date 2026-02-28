@@ -103,6 +103,7 @@ HAND_CONFIGS: Dict[str, Dict[str, Sequence[str] | str]] = {
             "index_tip",
             "middle_tip",
             "ring_tip",
+            "ring_tip",
         ),
     },
     "xarm7_paxini_right": {
@@ -113,6 +114,7 @@ HAND_CONFIGS: Dict[str, Dict[str, Sequence[str] | str]] = {
             "thumb_tip",
             "index_tip",
             "middle_tip",
+            "ring_tip",
             "ring_tip",
         ),
     },
