@@ -13,6 +13,7 @@ dependencies = [
     "scipy>=1.10.0",
     "torch>=2.8.0",
     "urdf-parser-py>=0.0.4",
+    "tqdm>=4.66.0",
 ]
 
 [tool.uv.sources]

@@ -11,6 +11,7 @@ import numpy as np
 import rerun as rr
 import torch
 from scipy.spatial.transform import Rotation as scipy_rotation
+from tqdm import trange
 
 from HandLatent.ik import pink_align_arm
 from HandLatent.model import (
@@ -275,7 +276,7 @@ def decode_hand_sequence_eepose(
         device=device, dtype=qpos_hand.dtype
     )
 
-    for frame_index in range(batch):
+    for frame_index in trange(batch, desc=f"decode_{hand_name}"):
         hand_frame = qpos_hand[frame_index]
         arm_seed = default_arm_seed if previous_arm is None else previous_arm
         combined_seed = trainer._merge_qpos(
