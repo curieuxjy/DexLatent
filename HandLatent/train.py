@@ -40,6 +40,7 @@ def main() -> None:
         "xarm7_ability_right",
         "xarm7_inspire_right",
         "xarm7_paxini_right",
+        "xarm7_allegro_right",
     ]
     config = TrainingConfig(
         num_steps=args.num_steps,

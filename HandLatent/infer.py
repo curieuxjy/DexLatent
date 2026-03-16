@@ -370,6 +370,7 @@ def main() -> None:
             f"xarm7_ability_{side}",
             f"xarm7_inspire_{side}",
             f"xarm7_paxini_{side}",
+            f"xarm7_allegro_{side}",
         )
     ]
 
@@ -395,6 +396,7 @@ def main() -> None:
                 f"xarm7_ability_{side}",
                 f"xarm7_inspire_{side}",
                 f"xarm7_paxini_{side}",
+                f"xarm7_allegro_{side}",
             ]
             source_qpos = torch.as_tensor(dataset[f"{side}_qpos"], dtype=torch.float32)
             source_norm = trainer.normalized_qpos(source_hand, source_qpos).to(

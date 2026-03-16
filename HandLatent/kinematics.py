@@ -118,6 +118,28 @@ HAND_CONFIGS: Dict[str, Dict[str, Sequence[str] | str]] = {
             "ring_tip",
         ),
     },
+    "xarm7_allegro_left": {
+        "urdf_path": os.path.join(ASSETS_DIR, "xarm7_allegro", "xarm7_allegro_left.urdf"),
+        "root_link": "link_base",
+        "wrist_link": "link7",
+        "tip_links": (
+            "link_15.0_tip",
+            "link_3.0_tip",
+            "link_7.0_tip",
+            "link_11.0_tip",
+        ),
+    },
+    "xarm7_allegro_right": {
+        "urdf_path": os.path.join(ASSETS_DIR, "xarm7_allegro", "xarm7_allegro_right.urdf"),
+        "root_link": "link_base",
+        "wrist_link": "link7",
+        "tip_links": (
+            "link_15.0_tip",
+            "link_3.0_tip",
+            "link_7.0_tip",
+            "link_11.0_tip",
+        ),
+    },
 }
 
 
