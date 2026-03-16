@@ -22,5 +22,21 @@
 - [x] target_hands에 xarm7_allegro 추가
 
 ## 5. 학습 및 검증
-- [ ] 5개 핸드 포함하여 재학습
-- [ ] 추론 시각화로 retargeting 품질 확인
+- [x] 5개 핸드 포함하여 재학습
+- [x] 추론 시각화로 retargeting 품질 확인
+
+## 6. 수치 평가 스크립트 (`HandLatent/evaluate.py`)
+- [x] 평가 스크립트 작성 및 테스트
+- [x] 세 가지 메트릭 구현:
+  - **Self-reconstruction error**: encode→같은 핸드로 decode 시 hand qpos MSE
+  - **Cross-embodiment pinch loss**: source→target 간 pinch 거리/방향 오차 (exponential weight 적용)
+  - **Fingertip position error**: full pipeline (encode→decode+IK) 후 공유 fingertip L2 거리 (m)
+- [x] 실행 방법:
+  ```bash
+  # demo 데이터로 평가 (source: inspire)
+  uv run -m HandLatent.evaluate --ckpt <checkpoint_path> --side right
+
+  # random sample로 평가
+  uv run -m HandLatent.evaluate --ckpt <checkpoint_path> --side right --num_samples 500
+  ```
+- [x] 참고: self-reconstruction은 demo 데이터가 있는 source hand만 demo로 평가하고, 나머지 핸드는 random qpos로 평가함
