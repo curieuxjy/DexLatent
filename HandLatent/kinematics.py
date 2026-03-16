@@ -127,6 +127,7 @@ HAND_CONFIGS: Dict[str, Dict[str, Sequence[str] | str]] = {
             "link_3.0_tip",
             "link_7.0_tip",
             "link_11.0_tip",
+            "link_11.0_tip",
         ),
     },
     "xarm7_allegro_right": {
@@ -137,6 +138,7 @@ HAND_CONFIGS: Dict[str, Dict[str, Sequence[str] | str]] = {
             "link_15.0_tip",
             "link_3.0_tip",
             "link_7.0_tip",
+            "link_11.0_tip",
             "link_11.0_tip",
         ),
     },

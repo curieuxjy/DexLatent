@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <robot name="xarm7_allegro_right">
+  <material name="black">
+    <color rgba="0.2 0.2 0.2 1" />
+  </material>
+  <material name="white">
+    <color rgba="0.9 0.9 0.9 1" />
+  </material>
   <link name="link_base">
     <inertial>
       <origin rpy="0 0 0" xyz="-0.021131 -0.0016302 0.056488" />

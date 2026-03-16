@@ -146,6 +146,40 @@ f"xarm7_allegro_{side}",
 3. Rerun으로 시각화
 ```
 
+### Rerun 시각화 동작 과정
+
+`infer.py`의 `main()`에서 디코딩된 궤적을 Rerun으로 시각화하는 과정입니다.
+
+```
+1. rr.init(spawn=True)로 Rerun Viewer GUI 프로세스를 자동 실행
+
+2. visualize_hand_motion() 호출 (source 원본 + 각 target 디코딩 결과)
+   │
+   ├─ URDFLogger(urdf_path, prefix)
+   │   └─ URDF 파일을 파싱하여 각 링크의 3D 메시(STL/DAE/OBJ)를 Rerun에 정적 로깅
+   │      entity_path_prefix로 핸드별 구분 (예: "xarm7_xhand_right_decode/")
+   │
+   ├─ discover_revolute_joints() / discover_mimic_joints()
+   │   └─ URDF에서 관절 정보 추출 (axis, limit, origin)
+   │
+   ├─ scale_joint_values()
+   │   └─ normalized qpos [-1, 1] → 실제 라디안 각도로 변환
+   │
+   └─ 프레임 루프 (매 프레임마다):
+       ├─ set_time(step * 0.02)  # 타임라인 위치 설정 (20ms 간격)
+       ├─ per_frame_root_offsets 적용 (left/right side 오프셋)
+       ├─ 각 revolute joint에 대해:
+       │   rotation = origin_rotation × axis_rotation(angle)
+       │   → rr.Transform3D 로깅 (translation + quaternion)
+       └─ 각 mimic joint에 대해:
+           angle = reference_angle × multiplier + offset
+           → 동일하게 Transform3D 로깅
+```
+
+**핵심 원리**: Rerun은 데이터 로깅 기반 시각화입니다. 코드가 타임라인에 Transform3D 데이터를 push하면, Viewer가 타임라인 슬라이더로 재생합니다. URDF 메시는 한 번만 등록하고, 매 프레임에서는 각 관절의 Transform만 업데이트하여 애니메이션을 구현합니다.
+
+**동시 표시**: source 원본과 5개 target 디코딩 결과가 각각 다른 `entity_path_prefix`로 로깅되므로, Rerun Viewer에서 6개 로봇이 나란히 표시됩니다.
+
 ---
 
 ## Allegro Hand 특이사항
