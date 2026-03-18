@@ -84,3 +84,27 @@
 - **project**: `DexLatent`
 - `train_cfg.json`의 파라미터가 wandb config로 함께 기록됨
 - `WANDB_SILENT=true`로 콘솔 출력 최소화
+
+## 8. TODO: 데이터셋 보충
+
+### 현재 상황
+
+- **현재 데이터**: `Dataset/demo.npz` — inspire hand 단일 에피소드, **792 프레임**
+  - `right_qpos`: (792, 13), `left_qpos`: (792, 13)
+  - 7 arm DOF + 6 hand DOF (inspire)
+- **용도**: 추론/평가 전용. 학습은 랜덤 qpos + pinch template 합성 데이터로 진행
+
+### 논문 대비 비교
+
+| | 현재 | 논문 (XL-VLA) |
+|---|---|---|
+| State-action pairs | 792 | 2,000,000 |
+| 핸드 종류 | 1 (inspire) | 4 (Ability, Paxini, X-Hand, Inspire) |
+| 태스크 | 1 | 10 |
+
+현재는 논문 대비 약 **0.04%** 수준 (2,500분의 1).
+
+### 데이터셋 공개 확인 필요
+
+원 저자들이 HuggingFace에 아직 데이터셋을 공개하지 않음. 나중에 확인할 것:
+- https://huggingface.co/datasets/GqJiang/XL-VLA
