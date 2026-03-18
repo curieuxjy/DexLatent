@@ -6,7 +6,7 @@ import math
 import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 import torch
 from torch import nn
@@ -469,6 +469,7 @@ class CrossEmbodimentTrainer:
         self._pinch_templates: Dict[str, torch.Tensor] = {}
         self._pinch_points: Dict[str, torch.Tensor] = {}
         self._pinch_pair_cache: Dict[Tuple[str, ...], Tuple[Tuple[int, int], ...]] = {}
+        self._step_callback: Optional[Callable[[int, Dict[str, float]], None]] = None
         self._pinch_template_target_noise_std = float(self.config.pinch_template_target_noise_std)
         self._pinch_template_joint_noise_std = float(self.config.pinch_template_joint_noise_std)
         self._neutral_tips: Dict[str, torch.Tensor] = {}
@@ -861,6 +862,7 @@ class CrossEmbodimentTrainer:
         latent_stats: Dict[str, Dict[str, Tuple[torch.Tensor, torch.Tensor]]] = {}
         source_tips: Dict[str, torch.Tensor] = {}
         hand_recon_loss = torch.tensor(0.0, device=self.config.device)
+        per_hand_recon: Dict[str, float] = {}
 
         for name in self.hand_names:
             hand_input = batch_qpos[name]
@@ -868,7 +870,9 @@ class CrossEmbodimentTrainer:
             latent_arm, latent_hand, _, qpos_hand_pred, hand_stats = self.autoencoders[name](hand_input)
             latents[name] = (latent_arm, latent_hand)
             latent_stats[name] = {"hand": hand_stats}
-            hand_recon_loss = hand_recon_loss + F.mse_loss(qpos_hand_pred, qpos_hand_gt)
+            recon_i = F.mse_loss(qpos_hand_pred, qpos_hand_gt)
+            per_hand_recon[name] = float(recon_i.detach().cpu())
+            hand_recon_loss = hand_recon_loss + recon_i
             source_tips[name] = self.hand_models[name].forward(hand_input)
 
         hand_recon_loss = hand_recon_loss / float(len(self.hand_names))
@@ -915,10 +919,13 @@ class CrossEmbodimentTrainer:
 
         kl_total = torch.tensor(0.0, device=self.config.device)
         component_count = 0
-        for stats in latent_stats.values():
+        per_hand_kl: Dict[str, float] = {}
+        for name, stats in latent_stats.items():
             for mean, logvar in stats.values():
                 kl_divergence = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp(), dim=1)
-                kl_total = kl_total + kl_divergence.mean()
+                kl_i = kl_divergence.mean()
+                per_hand_kl[name] = float(kl_i.detach().cpu())
+                kl_total = kl_total + kl_i
                 component_count += 1
         kl_loss = kl_total / float(component_count) if component_count > 0 else torch.tensor(0.0, device=self.config.device)
 
@@ -929,9 +936,14 @@ class CrossEmbodimentTrainer:
             + self.config.lambda_kl * kl_loss
         )
         total_loss.backward()
+
+        # Gradient norm (before optimizer step)
+        all_params = [p for p in self.autoencoders.parameters() if p.grad is not None]
+        grad_norm = float(torch.nn.utils.clip_grad_norm_(all_params, float("inf")).detach().cpu())
+
         self.optimizer.step()
 
-        return {
+        metrics = {
             "loss_total": float(total_loss.detach().cpu()),
             "loss_rec_total": float(reconstruction_loss.detach().cpu()),
             "loss_rec_hand": float((hand_recon_loss * self.config.rec_hand_weight).detach().cpu()),
@@ -939,7 +951,14 @@ class CrossEmbodimentTrainer:
             "loss_pinch_dir": float(pinch_direction.detach().cpu()) * self.config.lambda_dir,
             "loss_kl": float(kl_loss.detach().cpu()) * self.config.lambda_kl,
             "exp_dis": float(exp_weight_mean.detach().cpu()),
+            "grad_norm": grad_norm,
+            "lr": self.optimizer.param_groups[0]["lr"],
         }
+        for name in self.hand_names:
+            short = name.replace("xarm7_", "")
+            metrics[f"rec/{short}"] = per_hand_recon[name]
+            metrics[f"kl/{short}"] = per_hand_kl[name]
+        return metrics
 
     def train(self) -> List[Dict[str, float]]:
         """Run full training loop and save periodic checkpoints.
@@ -973,6 +992,8 @@ class CrossEmbodimentTrainer:
                 f"exp_dis={metrics['exp_dis']:.4f} "
                 f"kl={metrics['loss_kl']:.4f}"
             )
+            if self._step_callback is not None:
+                self._step_callback(step_index + 1, metrics)
             epoch_index = step_index + 1
             if self.config.checkpoint_interval > 0 and epoch_index % self.config.checkpoint_interval == 0:
                 checkpoint_path = self.save_checkpoint(epoch_index)

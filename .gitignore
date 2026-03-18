@@ -3,3 +3,4 @@
 *.sh
 Assets/paxini/meshes/*.glb
 Checkpoints/
+wandb/
